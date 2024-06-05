@@ -15,6 +15,5 @@ namespace Components
         {
             _coords = coords;
         }
-
     }
 }

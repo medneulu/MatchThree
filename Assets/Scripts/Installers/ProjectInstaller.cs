@@ -1,20 +1,22 @@
-using System;
+using Components;
 using Events;
 using UnityEngine.SceneManagement;
 using Zenject;
-using Zenject.Internal;
 
 namespace Installers
 {
     public class ProjectInstaller : MonoInstaller<ProjectInstaller>
     {
         private ProjectEvents _projectEvents;
+        private InputEvents _inputEvents;
 
         public override void InstallBindings()
         {
             _projectEvents = new ProjectEvents();
-
             Container.BindInstance(_projectEvents).AsSingle();
+
+            _inputEvents = new InputEvents();
+            Container.BindInstance(_inputEvents).AsSingle();
         }
 
         private void Awake()
@@ -39,9 +41,9 @@ namespace Installers
 
         private void OnSceneLoaded(Scene loadedScene, LoadSceneMode arg1)
         {
-            if (loadedScene.name == "Login")
+            if (loadedScene.name == EnVar.LoginSceneName)
             {
-                LoadScene("Main");
+                LoadScene(EnVar.MainSceneName);
             }
         }
     }

@@ -1,25 +1,43 @@
 using System.Collections.Generic;
+using Events;
+using Extensions.System;
+using Extensions.Unity;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using Sirenix.Utilities;
 using Unity.VisualScripting;
 using UnityEngine;
+using Zenject;
 
 namespace Components
 {
     public class GridManager : SerializedMonoBehaviour
     {
+        [Inject] private InputEvents InputEvents{get;set;}
         [BoxGroup(Order = 999)] [TableMatrix(SquareCells = true, DrawElementMethod = nameof(DrawTile))] [OdinSerialize]
         private Tile[,] _grid;
 
         [SerializeField] private List<GameObject> _tilePrefabs;
-
-
+        
+        
         private int _gridSizeX;
         private int _gridSizeY;
 
+        private Tile _selectedTile;
+        private Vector3 _mouseDownPos;
+        private Vector3 _mouseUpPos;
+        private void OnEnable()
+        {
+            RegisterEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnRegisterEvents();
+        }
+
         private Tile DrawTile(Rect rect, Tile tile)
-        { 
+        {
             Sprite spriteTile = tile.GetComponent<SpriteRenderer>().sprite;
             Rect textureRect = rect;
 
@@ -36,16 +54,14 @@ namespace Components
             _gridSizeY = sizeY;
 
             if (_grid != null)
-                foreach (Tile o in _grid)
+                foreach (var o in _grid)
                     DestroyImmediate(o.GameObject());
 
             _grid = new Tile[_gridSizeX, _gridSizeY];
 
             for (int x = 0; x < _gridSizeX; x++)
             for (int y = 0; y < _gridSizeY; y++)
-            {
-                InstantiateNotMatching(x , y);
-            }
+                InstantiateNotMatching(x, y);
         }
 
         private void InstantiateNotMatching(int x, int y)
@@ -58,65 +74,74 @@ namespace Components
                 //if it returns false it means there's no matched 3 at the beginning so break the loop and execute the func
                 //if it returns true it generate a random prefab again 
                 if (!IsMatchingAdjacent(x, y, randomIndex)) break;
-                
+
                 randomIndex = Random.Range(0, _tilePrefabs.Count);
                 tilePrefabRandom = _tilePrefabs[randomIndex];
             }
+
             CreateTileItem(x, y, tilePrefabRandom);
         }
 
-        private void CreateTileItem(int x, int y, GameObject selectedGem)
+        private void CreateTileItem(int x, int y, GameObject _tilePrefabs)
         {
-            if (selectedGem != null)
+            if (_tilePrefabs != null)
             {
                 Tile tile = _grid[x, y];
-                Vector2Int coord = new (x, _gridSizeY - y - 1);
-                Vector3 pos = new (coord.x, coord.y, 0f);
-                GameObject gem = Instantiate(selectedGem, pos, Quaternion.identity);
+                Vector2Int coord = new(x, _gridSizeY - y - 1);
+                Vector3 pos = new(coord.x, coord.y, 0f);
+                GameObject gem = Instantiate(_tilePrefabs, pos, Quaternion.identity);
                 tile = gem.GetComponent<Tile>();
                 tile.Construct(coord);
                 _grid[x, y] = tile;
             }
         }
-        
 
         private bool IsMatchingAdjacent(int x, int y, int id)
         {
-            if (y <= 1 || x <= 1)
+            bool IsVerticalMatch()
             {
-                if (y > 1)
-                {
-                    if (_grid[x, y - 1].ID == id && _grid[x, y - 2].ID == id)
-                    {
-                        return true;
-                    }
-                }
-                if (x > 1)
-                {
-                    if (_grid[x - 1, y].ID == id && _grid[x - 2, y].ID == id)
-                    {
-                        return true;
-                    }
-                }
+                return y > 1 && _grid[x, y - 1].ID == id && _grid[x, y - 2].ID == id;
             }
 
-            if (x > 1)
+            bool IsHorizontalMatch()
             {
-                if (_grid[x - 1, y].ID == id && _grid[x - 2, y].ID == id)
-                {
-                    return true;
-                }
+                return x > 1 && _grid[x - 1, y].ID == id && _grid[x - 2, y].ID == id;
             }
 
-            if (y > 1)
+            return IsVerticalMatch() || IsHorizontalMatch();
+        }
+        
+        private void RegisterEvents()
+        {
+            InputEvents.MouseDownGrid += OnMouseDownGrid;
+            InputEvents.MouseUpGrid += OnMouseUpGrid;
+        }
+
+        private void OnMouseDownGrid(Tile arg0, Vector3 arg1)
+        {
+            _selectedTile = arg0;
+            _mouseDownPos = arg1;
+            EDebug.Method();
+
+        }
+
+        private void OnMouseUpGrid(Vector3 arg0)
+        {
+            _mouseUpPos = arg0;
+
+            if(_selectedTile)
             {
-                if (_grid[x, y - 1].ID == id && _grid[x, y - 2].ID == id)
-                {
-                    return true;
-                }
+                EDebug.Method();
+
+                Debug.DrawLine(_mouseDownPos, _mouseUpPos, Color.blue, 2f);
             }
-            
-            return false;
+        }
+
+        private void UnRegisterEvents()
+        {
+            InputEvents.MouseDownGrid -= OnMouseDownGrid;
+            InputEvents.MouseUpGrid -= OnMouseUpGrid;
         }
     }
+    
 }
