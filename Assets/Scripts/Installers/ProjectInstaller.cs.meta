@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 378fa06cde7a2a6459c75a680fd729b1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _auidoManagerPref: {fileID: 4073216442128395395, guid: 6d7ca153c7878b3489cb0a17cb302f53, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
